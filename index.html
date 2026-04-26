@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio SB Dance — Sexy Sneakers & Slow Heels | Dance Classes Redfern Sydney</title>
+<meta name="description" content="Weekly hip-hop & heels dance classes in Redfern, Sydney. Sexy Sneakers 6:30PM & Slow Heels 7:30PM every Wednesday at 245 Chalmers Street. Beginner friendly. Book online from $20.">
+<meta name="keywords" content="dance classes sydney, hip hop dance sydney, heels dance class sydney, dance classes redfern, sexy sneakers dance, slow heels dance, studio sb dance, wednesday dance classes sydney, beginner dance sydney">
+<meta name="author" content="Studio SB Dance">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://studiosbdance.com">
+<meta property="og:title" content="Studio SB Dance — Sydney Dance Classes">
+<meta property="og:description" content="Weekly hip-hop & heels dance classes in Redfern, Sydney. Every Wednesday. Beginner friendly. Book from $20.">
+<meta property="og:url" content="https://studiosbdance.com">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://studiosbdance.com/logo.png">
+<meta property="og:site_name" content="Studio SB Dance">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Studio SB Dance — Sydney Dance Classes">
+<meta name="twitter:description" content="Weekly hip-hop & heels dance classes in Redfern, Sydney. Every Wednesday. Book from $20.">
+<meta name="twitter:image" content="https://studiosbdance.com/logo.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DanceSchool",
+  "name": "Studio SB Dance",
+  "url": "https://studiosbdance.com",
+  "logo": "https://studiosbdance.com/logo.png",
+  "description": "Weekly hip-hop and heels dance classes in Redfern, Sydney. Beginner friendly.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "245 Chalmers Street",
+    "addressLocality": "Redfern",
+    "addressRegion": "NSW",
+    "addressCountry": "AU"
+  },
+  "openingHours": "We 18:30-21:00",
+  "priceRange": "$20-$35",
+  "sameAs": [
+    "https://www.instagram.com/studiosbdance/",
+    "https://www.tiktok.com/@studiosbdance"
+  ]
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#3DD420;--dark:#0A0A0A;--surface:#141414;--surface2:#1C1C1C;--text:#F0EEE8;--muted:#777;--border:#222}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4{font-family:'Syne',sans-serif}
+
+/* NAV */
+nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;position:absolute;top:0;left:0;right:0;z-index:100}
+.logo-wrap{display:flex;align-items:center;gap:0.7rem}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:0.18em;color:#fff}
+.nav-right{display:flex;align-items:center;gap:1.2rem}
+.nav-ig{display:flex;align-items:center;gap:0.5rem;color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.82rem;transition:color .2s}
+.nav-ig:hover{color:#fff}
+.nav-btn{background:var(--green);color:#000;border:none;padding:0.55rem 1.4rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.8rem;cursor:pointer;border-radius:3px;letter-spacing:0.05em;transition:opacity .2s}
+.nav-btn:hover{opacity:.85}
+.nav-social-bar{display:none}
+
+/* HERO SLIDESHOW */
+.hero{position:relative;height:100vh;min-height:600px;overflow:hidden}
+.slides-wrap{position:absolute;inset:0}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;background-size:cover;background-position:center}
+.slide.active{opacity:1}
+.slide-overlay{position:absolute;inset:0;background:linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 100%)}
+.hero-fallback{position:absolute;inset:0;background:linear-gradient(135deg,#0A1408 0%,#0A0A0A 100%)}
+.hero-content{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:4rem 3rem 6rem}
+.hero-eyebrow{display:flex;align-items:center;gap:0.7rem;margin-bottom:1.4rem}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:ripple 2s infinite}
+@keyframes ripple{0%{box-shadow:0 0 0 0 rgba(61,212,32,0.4)}70%{box-shadow:0 0 0 8px rgba(61,212,32,0)}100%{box-shadow:0 0 0 0 rgba(61,212,32,0)}}
+.eyebrow-txt{font-size:0.75rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.18em;text-transform:uppercase;color:var(--green)}
+.hero h1{font-size:clamp(2rem,4.5vw,3.8rem);font-weight:800;line-height:1.05;letter-spacing:-0.02em;margin-bottom:1.2rem;color:#fff;max-width:600px}
+.hero h1 em{font-style:italic;color:var(--green);font-weight:400}
+.hero-desc{font-size:1rem;color:rgba(255,255,255,0.65);line-height:1.75;max-width:480px;margin-bottom:2.5rem;font-weight:300}
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-main{background:var(--green);color:#000;border:none;padding:0.9rem 2.2rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.88rem;cursor:pointer;border-radius:3px;letter-spacing:0.04em;transition:opacity .2s;text-decoration:none;display:inline-block}
+.btn-main:hover{opacity:.85}
+.btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.3);padding:0.9rem 2rem;font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;border-radius:3px;transition:border-color .2s;text-decoration:none;display:inline-block}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.7)}
+/* slide indicators */
+.slide-dots{position:absolute;bottom:2rem;left:3rem;z-index:10;display:flex;gap:0.5rem}
+.slide-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);cursor:pointer;transition:all .2s}
+.slide-dot.active{background:var(--green);width:20px;border-radius:3px}
+.slide-arrows{position:absolute;bottom:2rem;right:3rem;z-index:10;display:flex;gap:0.5rem}
+.slide-arrow{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.slide-arrow:hover{background:rgba(255,255,255,0.2)}
+
+/* CLASSES */
+.classes-section{padding:5rem 3rem}
+.sec-label{font-size:0.72rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);margin-bottom:0.7rem}
+.sec-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-0.02em;margin-bottom:2.5rem}
+
+.classes-list{display:flex;flex-direction:column;gap:1.5rem}
+
+/* CLASS CARD — full width horizontal */
+.class-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.class-card:hover{border-color:#333}
+.class-card-inner{display:grid;grid-template-columns:1fr auto;gap:0;align-items:stretch}
+.class-card-body{padding:1.8rem 2rem}
+.class-card-header{display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem}
+.class-type-badge{font-size:0.65rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.7rem;border-radius:20px}
+.badge-recurring{background:#0C2A08;color:var(--green)}
+.badge-single{background:#1A1A2E;color:#7B8FFF}
+.class-name{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700}
+.class-desc{font-size:0.85rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem;max-width:600px}
+.class-meta-row{display:flex;flex-wrap:wrap;gap:1.2rem;margin-bottom:1rem}
+.class-meta-item{display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--muted)}
+.class-meta-item span:last-child{color:var(--text)}
+.class-meta-item a{color:var(--green);text-decoration:none}
+.class-meta-item a:hover{text-decoration:underline}
+
+/* DATE SELECTOR for recurring */
+.date-selector{margin-top:1rem}
+.date-selector-label{font-size:0.7rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem}
+.date-pills{display:flex;gap:0.5rem;flex-wrap:wrap}
+.date-pill{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.5rem 1rem;cursor:pointer;transition:all .2s;text-align:center}
+.date-pill:hover{border-color:#444}
+.date-pill.selected{background:#0C2A08;border-color:var(--green)}
+.date-pill-day{font-size:0.65rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+.date-pill.selected .date-pill-day{color:var(--green)}
+.date-pill-date{font-size:0.9rem;font-weight:700;color:var(--text);margin-top:0.1rem}
+.date-pill-spots{font-size:0.65rem;color:var(--muted);margin-top:0.15rem}
+.date-pill.selected .date-pill-spots{color:var(--green)}
+
+.class-card-action{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;border-left:1px solid var(--border);min-width:180px;gap:0.8rem;background:var(--surface2)}
+.class-price{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--green)}
+.class-price-note{font-size:0.72rem;color:var(--muted);margin-top:-0.3rem}
+.book-btn{background:var(--green);color:#000;border:none;padding:0.7rem 1.5rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.82rem;cursor:pointer;border-radius:3px;transition:opacity .2s;width:100%}
+.book-btn:hover{opacity:.85}
+.book-btn:disabled{opacity:.4;cursor:not-allowed;background:var(--muted)}
+.spots-badge{font-size:0.68rem;font-weight:700;font-family:'Syne',sans-serif;padding:0.25rem 0.7rem;border-radius:20px;text-align:center}
+.spots-open{background:#0C2A08;color:var(--green)}
+.spots-few{background:#2A1500;color:#FF9A3C}
+.spots-full{background:#2A0010;color:#FF3C6E}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:4rem;color:var(--muted);font-size:0.9rem;gap:0.8rem}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty-state h3{font-size:1.1rem;color:var(--text);margin-bottom:0.5rem}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;width:100%;max-width:460px;position:relative;max-height:90vh;overflow-y:auto}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;line-height:1;padding:0.2rem}
+.modal-close:hover{color:var(--text)}
+.modal-summary{background:var(--surface2);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem}
+.modal-summary-top{display:flex;justify-content:space-between;align-items:start;margin-bottom:0.4rem}
+.modal-summary-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+.modal-summary-price{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--green)}
+.modal-summary-meta{font-size:0.8rem;color:var(--muted);line-height:1.6}
+.fg{margin-bottom:1.1rem}
+.fg label{display:block;font-size:0.7rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem}
+.fg input{width:100%;background:var(--dark);border:1px solid var(--border);border-radius:5px;padding:0.72rem 0.95rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color .2s}
+.fg input:focus{border-color:var(--green)}
+.modal-submit{width:100%;background:var(--green);color:#000;border:none;padding:0.95rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.92rem;cursor:pointer;border-radius:5px;letter-spacing:0.04em;transition:opacity .2s;margin-top:0.5rem}
+.modal-submit:hover{opacity:.85}
+.modal-submit:disabled{opacity:.6;cursor:not-allowed}
+.modal-note{text-align:center;font-size:0.72rem;color:var(--muted);margin-top:0.6rem}
+
+footer{padding:2.5rem 3rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.foot-logo{display:flex;align-items:center;gap:0.6rem}
+.foot-logo-txt{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.18em}
+.foot-copy{font-size:0.76rem;color:var(--muted)}
+
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:0.85rem 1.6rem;border-radius:5px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;transform:translateY(120px);opacity:0;transition:all .35s;z-index:9999}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:768px){
+  nav{padding:0.8rem 1rem}
+  .nav-right .nav-ig,.nav-right>div{display:none!important}
+  #mobile-social-bar{display:flex!important}
+  .hero-content{padding:7rem 1.5rem 4rem}
+  .classes-section{padding:3rem 1.5rem}
+  .class-card-inner{grid-template-columns:1fr;display:block}
+  .class-name{font-size:1rem;white-space:normal;overflow:visible;word-wrap:break-word}
+  .class-card-header{flex-wrap:wrap;gap:0.5rem}
+  .class-card-action{border-left:none;border-top:1px solid var(--border);flex-direction:row;justify-content:space-between;padding:1.2rem 1.5rem}
+  footer{padding:2rem 1.5rem}
+  .slide-dots,.slide-arrows{left:1.5rem}
+  .slide-arrows{right:1.5rem;left:auto}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-wrap">
+    <img src="./logo.png" alt="Studio SB" style="width:40px;height:40px;object-fit:contain;filter:brightness(0) invert(1)">
+    <span class="logo-text">STUDIO SB</span>
+  </div>
+  <div class="nav-right">
+    <a href="https://www.instagram.com/studiosbdance/" target="_blank" class="nav-ig" title="Instagram">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      @studiosbdance
+    </a>
+    <a href="https://www.tiktok.com/@studiosbdance" target="_blank" class="nav-ig" title="TikTok">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+      TikTok
+    </a>
+    <div style="position:relative">
+      <button onclick="toggleSpotify(event)" class="nav-ig" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.4rem" title="Spotify">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+        Spotify ▾
+      </button>
+      <div id="spotify-drop" style="display:none;position:absolute;top:2.2rem;right:0;background:#141414;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;min-width:200px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,0.4)">
+        <a href="https://open.spotify.com/playlist/2bEBNDNbNscKoas0P9UuwX?si=FpGDzNTGRJGKNcoi5GSHPA" target="_blank" style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1rem;font-size:0.82rem;color:rgba(240,238,232,0.85);text-decoration:none;transition:background .15s" onmouseover="this.style.background='#1C1C1C'" onmouseout="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#3DD420"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          Sexy Sneakers Playlist
+        </a>
+        <a href="https://open.spotify.com/playlist/6cKrbirhOGsLoIu3YEb4LH?si=zbq9GTZbSfibp9Y8vB1uGQ" target="_blank" style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1rem;font-size:0.82rem;color:rgba(240,238,232,0.85);text-decoration:none;border-top:1px solid #222;transition:background .15s" onmouseover="this.style.background='#1C1C1C'" onmouseout="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#3DD420"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          Slow Heels Playlist
+        </a>
+      </div>
+    </div>
+    <button class="nav-btn" onclick="document.getElementById('classes').scrollIntoView({behavior:'smooth'})">Book Now</button>
+  </div>
+</nav>
+<!-- MOBILE SOCIAL BAR -->
+<div class="nav-social-bar" id="mobile-social-bar" style="display:none;position:absolute;top:56px;left:0;right:0;z-index:99;background:rgba(10,10,10,0.96);backdrop-filter:blur(12px);padding:0.5rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08);justify-content:center;gap:1.5rem">
+  <a href="https://www.instagram.com/studiosbdance/" target="_blank" style="display:flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.78rem">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+    @studiosbdance
+  </a>
+  <a href="https://www.tiktok.com/@studiosbdance" target="_blank" style="display:flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.78rem">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+    TikTok
+  </a>
+  <div style="position:relative">
+    <button onclick="toggleSpotify(event)" style="display:flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.6);background:none;border:none;cursor:pointer;font-size:0.78rem;padding:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      Spotify ▾
+    </button>
+    <div id="spotify-drop-mobile" style="display:none;position:absolute;top:1.8rem;left:50%;transform:translateX(-50%);background:#141414;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;min-width:200px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,0.4)">
+      <a href="https://open.spotify.com/playlist/2bEBNDNbNscKoas0P9UuwX" target="_blank" style="display:block;padding:0.7rem 1rem;font-size:0.82rem;color:rgba(240,238,232,0.85);text-decoration:none" onmouseover="this.style.background='#1C1C1C'" onmouseout="this.style.background='transparent'">🎵 Sexy Sneakers Playlist</a>
+      <a href="https://open.spotify.com/playlist/6cKrbirhOGsLoIu3YEb4LH" target="_blank" style="display:block;padding:0.7rem 1rem;font-size:0.82rem;color:rgba(240,238,232,0.85);text-decoration:none;border-top:1px solid #222" onmouseover="this.style.background='#1C1C1C'" onmouseout="this.style.background='transparent'">🎵 Slow Heels Playlist</a>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-fallback"></div>
+  <div class="slides-wrap" id="slides-wrap"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><div class="live-dot"></div><span class="eyebrow-txt">Redfern, Sydney</span></div>
+    <h1>Sexy Sneakers.<br>Slow Heels.<br><em>Sydney Dance Classes.</em></h1>
+    <p class="hero-desc">Sydney's weekly dance classes. Every Wednesday in Redfern. Build confidence, own your movement, become her.</p>
+    <div class="hero-cta">
+      <button class="btn-main" onclick="document.getElementById('classes').scrollIntoView({behavior:'smooth'})">Book a Class</button>
+      <a href="https://www.instagram.com/studiosbdance/" target="_blank" class="btn-ghost">Follow Us</a>
+    </div>
+  </div>
+  <div class="slide-dots" id="slide-dots"></div>
+  <div class="slide-arrows">
+    <button class="slide-arrow" onclick="prevSlide()">&#8592;</button>
+    <button class="slide-arrow" onclick="nextSlide()">&#8594;</button>
+  </div>
+</section>
+
+<!-- CLASSES -->
+<section class="classes-section" id="classes">
+  <div class="sec-label">Available classes</div>
+  <h2 class="sec-title">Pick your session</h2>
+  <div id="classes-list" class="classes-list">
+    <div class="loading"><div class="spinner"></div> Loading classes...</div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-logo">
+    <img src="./logo.png" alt="Studio SB" style="width:30px;height:30px;object-fit:contain;">
+    <span class="foot-logo-txt">STUDIO SB</span>
+  </div>
+  <div class="foot-copy">📍 Redfern, Sydney NSW · © 2026 Studio SB Dance</div>
+  <a href="https://www.instagram.com/studiosbdance/" target="_blank" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">@studiosbdance</a>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 style="margin-bottom:1.2rem;font-size:1.1rem">Book your spot</h3>
+    <div class="modal-summary">
+      <div class="modal-summary-top">
+        <div class="modal-summary-name" id="m-name"></div>
+        <div class="modal-summary-price" id="m-price"></div>
+      </div>
+      <div class="modal-summary-meta" id="m-meta"></div>
+    </div>
+    <div class="fg"><label>Full name</label><input type="text" id="b-name" placeholder="Your name"></div>
+    <div class="fg"><label>Email</label><input type="email" id="b-email" placeholder="you@email.com"></div>
+    <div class="fg"><label>Phone (optional)</label><input type="tel" id="b-phone" placeholder="04XX XXX XXX"></div>
+    <div class="fg"><label>Song recommendation (optional)</label><input type="text" id="b-song" placeholder="Any song you'd love to dance to?"></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1.1rem">
+      <label style="display:flex;align-items:flex-start;gap:0.8rem;cursor:pointer">
+        <input type="checkbox" id="b-firsttime" style="width:18px;height:18px;margin-top:2px;accent-color:var(--green);flex-shrink:0">
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;color:var(--text)">First time at Studio SB? 🎉</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem">First-timers get <strong style="color:var(--green)">50% off</strong> their first class! Tick this if it's your first time and we'll apply the discount.</div>
+        </div>
+      </label>
+    </div>
+    <button class="modal-submit" id="modal-btn" onclick="submitBooking()">Confirm & Pay →</button>
+    <p class="modal-note">🔒 You'll be redirected to Stripe's secure checkout</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://brpcnfoqitjymyygflub.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJycGNuZm9xaXRqeW15eWdmbHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNTQ4NzAsImV4cCI6MjA5MTczMDg3MH0.DxVW0jskYF0An3SrILlAiBDjAJbXDUu7Tjo3_xV9snc';
+const STRIPE_LINKS = {
+  'sexy sneakers': 'https://buy.stripe.com/7sY8wI0hsfy94Ziewh24000',
+  'slow heels': 'https://buy.stripe.com/7sYeV6d4e99LfDWag124002',
+  'double': 'https://buy.stripe.com/5kQbIU9S299L63m87T24001',
+  'default': 'https://buy.stripe.com/7sY8wI0hsfy94Ziewh24000'
+};
+const COUPON_ID = 'FIRSTTIMER';
+
+function getStripeLink(className) {
+  const n = (className || '').toLowerCase();
+  if (n.includes('double')) return STRIPE_LINKS['double'];
+  if (n.includes('slow heels') || n.includes('slow')) return STRIPE_LINKS['slow heels'];
+  if (n.includes('sneakers')) return STRIPE_LINKS['sexy sneakers'];
+  return STRIPE_LINKS['default'];
+}
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: { headers: { apikey: SUPABASE_KEY } }
+});
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let selectedClass = null;
+let selectedDate = null;
+
+// ── SLIDESHOW ──
+let slides = [], currentSlide = 0, slideTimer = null;
+
+async function loadPhotos() {
+  const { data } = await db.from('photos').select('*').eq('active', true).order('sort_order');
+  if (!data || data.length === 0) return;
+  slides = data;
+  const wrap = document.getElementById('slides-wrap');
+  const dots = document.getElementById('slide-dots');
+  wrap.innerHTML = slides.map((p, i) => `
+    <div class="slide ${i===0?'active':''}" style="background-image:url('${p.url}')">
+      <div class="slide-overlay"></div>
+    </div>`).join('');
+  dots.innerHTML = slides.map((_, i) => `<div class="slide-dot ${i===0?'active':''}" onclick="goSlide(${i})"></div>`).join('');
+  startSlideTimer();
+}
+
+function goSlide(n) {
+  const els = document.querySelectorAll('.slide');
+  const dotEls = document.querySelectorAll('.slide-dot');
+  if (!els.length) return;
+  els[currentSlide].classList.remove('active');
+  dotEls[currentSlide].classList.remove('active');
+  currentSlide = (n + slides.length) % slides.length;
+  els[currentSlide].classList.add('active');
+  dotEls[currentSlide].classList.add('active');
+}
+function nextSlide() { clearTimeout(slideTimer); goSlide(currentSlide + 1); startSlideTimer(); }
+function prevSlide() { clearTimeout(slideTimer); goSlide(currentSlide - 1); startSlideTimer(); }
+function startSlideTimer() { slideTimer = setTimeout(nextSlide, 4500); }
+
+// ── DATE HELPERS ──
+// Force Sydney time for all date operations
+function getSydneyNow() {
+  return new Date(new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }));
+}
+
+function getNextNDates(dayOfWeek, n) {
+  const dates = [];
+  const today = getSydneyNow();
+  today.setHours(0,0,0,0);
+  let d = new Date(today);
+  let diff = (dayOfWeek - d.getDay() + 7) % 7;
+  if (diff === 0) diff = 7;
+  d.setDate(d.getDate() + diff);
+  for (let i = 0; i < n; i++) {
+    dates.push(new Date(d));
+    d.setDate(d.getDate() + 7);
+  }
+  return dates;
+}
+
+function fmtDateShort(d) { return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`; }
+function fmtDateFull(d) { return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`; }
+function localDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function dateToStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function fmtTime(t) {
+  const [h, m] = t.split(':');
+  const hour = parseInt(h);
+  return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+async function getBookingsForDate(classId, dateStr) {
+  const { data } = await db.from('bookings').select('id').eq('class_id', classId).eq('booked_date', dateStr);
+  return data ? data.length : 0;
+}
+
+// ── LOAD CLASSES ──
+async function loadClasses() {
+  const list = document.getElementById('classes-list');
+  try {
+    const { data, error } = await db.from('classes').select('*').eq('active', true).order('created_at');
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      list.innerHTML = `<div class="empty-state"><h3>No classes scheduled yet</h3><p>Check back soon or follow @studiosbdance on Instagram.</p></div>`;
+      return;
+    }
+    // Filter: singles must be in the future
+    const today = new Date(); today.setHours(0,0,0,0);
+    const visible = data.filter(c => c.type === 'recurring' || (c.date && localDate(c.date) >= today));
+    if (!visible.length) {
+      list.innerHTML = `<div class="empty-state"><h3>No upcoming classes right now</h3><p>Follow @studiosbdance for the latest updates.</p></div>`;
+      return;
+    }
+    const sorted = [...visible].sort((a,b) => {
+      const aD = a.name && a.name.toLowerCase().includes('double') ? 0 : 1;
+      const bD = b.name && b.name.toLowerCase().includes('double') ? 0 : 1;
+      return aD - bD;
+    });
+    list.innerHTML = sorted.map(c => renderClassCard(c)).join('');
+  } catch(e) {
+    console.error('loadClasses error:', e);
+    list.innerHTML = `<div class="empty-state"><h3>Couldn't load classes</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function renderClassCard(c) {
+  const isDouble = c.name && c.name.toLowerCase().includes('double');
+  const isSlowHeels = c.name && (c.name.toLowerCase().includes('slow heels') || c.name.toLowerCase().includes('slow'));
+  const isSneakers = c.name && c.name.toLowerCase().includes('sneakers');
+  const isRecurring = c.type === 'recurring';
+  const mapsLink = c.location_url ? `<a href="${c.location_url}" target="_blank">${c.location}</a>` : `<span>${c.location}</span>`;
+  let dateSection = '';
+  if (isRecurring) {
+    const dates = getNextNDates(c.day_of_week, 4);
+    dateSection = `
+      <div class="date-selector">
+        <div class="date-selector-label">Select a date — next 4 sessions</div>
+        <div class="date-pills" id="pills-${c.id}">
+          ${dates.map((d,i) => `
+            <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}">
+              <div class="date-pill-day">${DAYS_SHORT[d.getDay()]}</div>
+              <div class="date-pill-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
+
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  const singleDateStr = !isRecurring && c.date ? localDate(c.date) : null;
+  const dateDisplay = isRecurring
+    ? `Every ${DAYS[c.day_of_week]} · ${fmtTime(c.time)}`
+    : `${singleDateStr ? fmtDateFull(singleDateStr) : ''} · ${fmtTime(c.time)}`;
+
+  return `
+    <div class="class-card" id="card-${c.id}" style="${isDouble ? 'border-color:rgba(61,212,32,0.5);box-shadow:0 0 24px rgba(61,212,32,0.1)' : ''}">
+      <div class="class-card-inner">
+        <div class="class-card-body">
+          <div class="class-card-header">
+            <span class="class-type-badge ${isRecurring ? 'badge-recurring' : 'badge-single'}">${isRecurring ? '↻ Weekly' : '★ Single Event'}</span>
+            ${isDouble ? `<span style="background:#3DD420;color:#000;font-size:0.62rem;font-weight:800;font-family:Syne,sans-serif;letter-spacing:0.1em;padding:0.22rem 0.75rem;border-radius:20px;margin-left:0.3rem">\u2b50 RECOMMENDED</span>` : ''}
+            <div class="class-name">${c.name}</div>
+          </div>
+          ${isDouble ? `<div class="class-desc">Join us for a two-part class experience designed to build confidence, strength, and fluidity. Begin with <strong style="color:var(--text)">Sexy Sneakers</strong> \u2014 the perfect warm-up to connect with your body and find your flow. Then transition into <strong style="color:var(--text)">Slow Heels</strong> \u2014 where you\u2019ll refine your movement and step into your most confident, elevated self.</div>` : (c.description ? `<div class="class-desc">${c.description}</div>` : '')}
+          <div class="class-meta-row">
+            <div class="class-meta-item"><span>⏰</span><span>${dateDisplay}</span></div>
+            <div class="class-meta-item"><span>📍</span>${mapsLink}</div>
+            <div class="class-meta-item"><span>🎯</span><span>${c.name.toLowerCase().includes('slow heels') || c.name.toLowerCase().includes('slow') ? 'Beginners' : c.name.toLowerCase().includes('double') ? 'All levels' : 'Beginner / Intermediate'}</span></div>
+          </div>
+          ${dateSection}
+        </div>
+        <div class="class-card-action">
+          <div>
+            <div class="class-price">$${c.price}</div>
+            <div class="class-price-note">per session</div>
+          </div>
+          
+          <button class="book-btn" id="bookbtn-${c.id}" onclick="openModal('${c.id}')">Book Now</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Load spots counts for recurring classes
+async function loadSpotCounts(classes) {
+  for (const c of classes) {
+    if (c.type !== 'recurring') continue;
+    const dates = getNextNDates(c.day_of_week, 4);
+    for (const d of dates) {
+      const ds = dateToStr(d);
+      const booked = await getBookingsForDate(c.id, ds);
+      const left = Math.max(0, c.max_spots - booked);
+      const el = document.getElementById(`spots-${c.id}-${ds}`);
+      if (el) el.textContent = left === 0 ? 'Full' : `${left} left`;
+    }
+    // Update selected date badge
+    updateCardBadge(c.id, dateToStr(dates[0]), c.max_spots);
+  }
+}
+
+async function updateCardBadge(classId, dateStr, maxSpots) {
+  const booked = await getBookingsForDate(classId, dateStr);
+  const left = Math.max(0, maxSpots - booked);
+  const badge = document.getElementById(`badge-${classId}`);
+  const btn = document.getElementById(`bookbtn-${classId}`);
+  if (!badge) return;
+  badge.className = 'spots-badge ' + (left === 0 ? 'spots-full' : left <= 3 ? 'spots-few' : 'spots-open');
+  badge.textContent = left === 0 ? 'Full' : left <= 3 ? `${left} spots left` : `${left} spots`;
+  if (btn) btn.disabled = left === 0;
+}
+
+function selectDate(classId, dateStr, el) {
+  document.querySelectorAll(`#pills-${classId} .date-pill`).forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  // find class and update badge
+  db.from('classes').select('max_spots').eq('id', classId).single().then(({data}) => {
+    if (data) updateCardBadge(classId, dateStr, data.max_spots);
+  });
+}
+
+let modalClassData = null;
+
+async function openModal(classId) {
+  const { data: c } = await db.from('classes').select('*').eq('id', classId).single();
+  if (!c) return;
+  modalClassData = c;
+
+  // Get selected date
+  if (c.type === 'recurring') {
+    const sel = document.querySelector(`#pills-${classId} .date-pill.selected`);
+    selectedDate = sel ? sel.dataset.date : dateToStr(getNextNDates(c.day_of_week, 1)[0]);
+  } else {
+    selectedDate = c.date;
+  }
+
+  const d = localDate(selectedDate);
+  document.getElementById('m-name').textContent = c.name;
+  document.getElementById('m-price').textContent = `$${c.price}`;
+  document.getElementById('m-meta').innerHTML = `${fmtDateFull(d)} · ${fmtTime(c.time)}<br>${c.location}`;
+  document.getElementById('b-name').value = '';
+  document.getElementById('b-email').value = '';
+  document.getElementById('b-phone').value = '';
+  document.getElementById('modal-btn').disabled = false;
+  document.getElementById('modal-btn').textContent = 'Confirm & Pay →';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function submitBooking() {
+  const name = document.getElementById('b-name').value.trim();
+  const email = document.getElementById('b-email').value.trim();
+  const phone = document.getElementById('b-phone').value.trim();
+  if (!name || !email) { showToast('Please enter your name and email.', true); return; }
+  if (!email.includes('@')) { showToast('Please enter a valid email.', true); return; }
+
+  const btn = document.getElementById('modal-btn');
+  btn.disabled = true; btn.textContent = 'Redirecting to payment...';
+
+  // Store booking details in sessionStorage — only saved to Supabase AFTER payment confirmed
+  const song = document.getElementById('b-song').value.trim();
+  const firstTime = document.getElementById('b-firsttime').checked;
+  const finalPrice = firstTime ? (modalClassData.price * 0.5).toFixed(2) : modalClassData.price;
+  // Get correct Stripe link for this class, auto-apply coupon if first timer
+  const baseLink = getStripeLink(modalClassData.name);
+  const stripeLink = firstTime ? baseLink + '?prefilled_promo_code=' + COUPON_ID : baseLink;
+
+  const bookingData = {
+    class_id: modalClassData.id,
+    class_name: modalClassData.name,
+    booked_date: selectedDate,
+    time: modalClassData.time,
+    location: modalClassData.location,
+    price: finalPrice,
+    name, email,
+    phone: phone || '',
+    song: song || '',
+    first_time: firstTime
+  };
+  sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+
+  // Redirect to Stripe — success goes to confirmed.html?paid=true, cancel goes back to index
+  const baseUrl = window.location.href.split('?')[0].replace('index.html', '');
+  const successUrl = encodeURIComponent(baseUrl + 'confirmed.html?paid=true');
+  const cancelUrl = encodeURIComponent(baseUrl + 'index.html');
+  // If coupon applied, stripeLink already has ?prefilled_promo_code=... so use & for next params
+  const separator = stripeLink.includes('?') ? '&' : '?';
+  window.location.href = `${stripeLink}${separator}success_url=${successUrl}&cancel_url=${cancelUrl}`;
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? '#FF3C6E' : 'var(--green)';
+  t.style.color = isError ? '#fff' : '#000';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function toggleSpotify(e) {
+  e.stopPropagation();
+  const d = document.getElementById('spotify-drop');
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  const d = document.getElementById('spotify-drop');
+  if (d) d.style.display = 'none';
+});
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+// ── INIT ──
+loadPhotos();
+loadClasses();
+</script>
+</body>
+</html>

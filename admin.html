@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio SB — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#3DD420;--dark:#0A0A0A;--surface:#141414;--surface2:#1C1C1C;--text:#F0EEE8;--muted:#777;--border:#222;--red:#FF3C6E;--blue:#7B8FFF}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh}
+h1,h2,h3{font-family:'Syne',sans-serif}
+
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2.5rem;width:100%;max-width:380px}
+.login-logo{display:flex;align-items:center;gap:0.7rem;margin-bottom:2rem}
+.login-logo img{width:36px;height:36px;object-fit:contain}
+.login-logo-txt{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.18em}
+.login-box h2{font-size:1.3rem;font-weight:700;margin-bottom:0.3rem}
+.login-box p{font-size:0.85rem;color:var(--muted);margin-bottom:1.8rem}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:0.7rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--dark);border:1px solid var(--border);border-radius:5px;padding:0.72rem 0.95rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--green)}
+.fg select option{background:#141414}
+.fg textarea{resize:vertical;min-height:70px}
+.login-btn{width:100%;background:var(--green);color:#000;border:none;padding:0.9rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;border-radius:5px;margin-top:0.5rem;transition:opacity .2s}
+.login-btn:hover{opacity:.85}
+.login-err{color:var(--red);font-size:0.8rem;margin-top:0.8rem;text-align:center}
+
+/* DASHBOARD */
+.dashboard{display:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;border-bottom:1px solid var(--border);background:rgba(10,10,10,0.96);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.topbar-left{display:flex;align-items:center;gap:0.8rem}
+.topbar-logo img{width:30px;height:30px;object-fit:contain}
+.topbar-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.18em}
+.topbar-badge{background:rgba(61,212,32,0.12);border:1px solid rgba(61,212,32,0.3);border-radius:20px;padding:0.2rem 0.7rem;font-size:0.65rem;color:var(--green);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:0.1em}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.view-site-btn{display:flex;align-items:center;gap:0.4rem;color:var(--muted);text-decoration:none;font-size:0.8rem;font-weight:500;transition:color .2s}
+.view-site-btn:hover{color:var(--text)}
+.logout-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:0.35rem 0.9rem;font-family:'Syne',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;border-radius:3px;transition:all .2s}
+.logout-btn:hover{color:var(--text);border-color:#555}
+
+.main{padding:2rem;max-width:1200px;margin:0 auto}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.stat-label{font-size:0.68rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem}
+.stat-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--green)}
+.stat-sub{font-size:0.73rem;color:var(--muted);margin-top:0.15rem}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.tab{background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;padding:0.75rem 1.3rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;letter-spacing:0.03em}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab:hover:not(.active){color:var(--text)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* FORM CARD */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.8rem}
+.form-card-title{font-size:0.95rem;font-weight:700;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.fg-full{grid-column:1/-1}
+
+/* Type toggle */
+.type-toggle{display:flex;gap:0;background:var(--dark);border:1px solid var(--border);border-radius:6px;overflow:hidden;width:fit-content}
+.type-opt{background:transparent;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;padding:0.5rem 1.2rem;cursor:pointer;transition:all .2s;letter-spacing:0.05em}
+.type-opt.active{background:var(--green);color:#000}
+
+.conditional{transition:all .2s}
+.hidden{display:none}
+
+.add-btn{background:var(--green);color:#000;border:none;padding:0.75rem 1.8rem;font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;cursor:pointer;border-radius:5px;transition:opacity .2s}
+.add-btn:hover{opacity:.85}
+.add-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* TABLE */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.table-top{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border)}
+.table-top h3{font-size:0.92rem;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:0.75rem 1.2rem;font-size:0.68rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:0.85rem 1.2rem;font-size:0.84rem;border-bottom:1px solid #181818;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+.badge{display:inline-block;font-size:0.62rem;font-weight:700;font-family:'Syne',sans-serif;padding:0.18rem 0.6rem;border-radius:20px;letter-spacing:0.05em}
+.badge-active{background:#0C2A08;color:var(--green)}
+.badge-inactive{background:#222;color:var(--muted)}
+.badge-full{background:#2A0010;color:#FF3C6E}
+.badge-recurring{background:rgba(61,212,32,0.08);color:var(--green);border:1px solid rgba(61,212,32,0.2)}
+.badge-single{background:rgba(123,143,255,0.1);color:var(--blue);border:1px solid rgba(123,143,255,0.2)}
+.action-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.25rem 0.65rem;font-family:'Syne',sans-serif;font-weight:700;font-size:0.68rem;cursor:pointer;border-radius:3px;transition:all .2s;margin-left:0.3rem}
+.action-btn:hover{color:var(--text);border-color:#555}
+.action-btn.del:hover{color:#FF3C6E;border-color:#FF3C6E}
+.empty-table{text-align:center;padding:3rem;color:var(--muted);font-size:0.88rem}
+
+/* PHOTOS */
+.photo-upload-area{border:2px dashed var(--border);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s;position:relative}
+.photo-upload-area:hover{border-color:#444}
+.photo-upload-area.dragover{border-color:var(--green);background:rgba(61,212,32,0.04)}
+.upload-icon{font-size:2rem;margin-bottom:0.8rem}
+.upload-title{font-weight:700;font-size:0.95rem;margin-bottom:0.3rem}
+.upload-sub{font-size:0.8rem;color:var(--muted)}
+.upload-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-progress{background:var(--surface2);border-radius:4px;height:4px;margin-top:1rem;overflow:hidden;display:none}
+.upload-progress-bar{height:100%;background:var(--green);width:0;transition:width .3s}
+
+.photos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-top:1.5rem}
+.photo-item{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;background:var(--surface2)}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-item-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .2s;display:flex;align-items:center;justify-content:center;gap:0.5rem}
+.photo-item:hover .photo-item-overlay{background:rgba(0,0,0,0.6)}
+.photo-action{background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.photo-item:hover .photo-action{opacity:1}
+.photo-action.del-photo:hover{background:rgba(255,60,110,0.8);border-color:#FF3C6E}
+.photo-empty{color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem;background:var(--surface2);border-radius:8px}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:2.5rem;color:var(--muted);font-size:0.85rem;gap:0.6rem}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STATUS */
+.status-pending{background:#2A1500;color:#FF9A3C;font-size:0.62rem;font-weight:700;font-family:'Syne',sans-serif;padding:0.18rem 0.6rem;border-radius:20px}
+.status-paid{background:#0C2A08;color:var(--green);font-size:0.62rem;font-weight:700;font-family:'Syne',sans-serif;padding:0.18rem 0.6rem;border-radius:20px}
+
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#000;padding:0.85rem 1.6rem;border-radius:5px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;transform:translateY(120px);opacity:0;transition:all .35s;z-index:9999}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .form-grid,.form-grid-3{grid-template-columns:1fr}
+  .main{padding:1rem}
+  .topbar{padding:1rem}
+  th:nth-child(n+4),td:nth-child(n+4){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="./logo.png" alt="Studio SB">
+      <span class="login-logo-txt">STUDIO SB</span>
+    </div>
+    <h2>Admin Login</h2>
+    <p>Manage your classes, bookings and photos</p>
+    <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo"><img src="./logo.png" alt="Studio SB"></div>
+      <span class="topbar-name">STUDIO SB</span>
+      <span class="topbar-badge">ADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <a href="./index.html" target="_blank" class="view-site-btn">↗ View site</a>
+      <span style="font-size:0.78rem;color:var(--muted)" id="admin-email"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Bookings</div><div class="stat-val" id="stat-bookings">—</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Active Classes</div><div class="stat-val" id="stat-classes">—</div><div class="stat-sub">Upcoming</div></div>
+      <div class="stat-card"><div class="stat-label">Photos</div><div class="stat-val" id="stat-photos">—</div><div class="stat-sub">In slideshow</div></div>
+      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-val" id="stat-week">—</div><div class="stat-sub">New bookings</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('classes',this)">Classes</button>
+      <button class="tab" onclick="switchTab('bookings',this)">Bookings</button>
+      <button class="tab" onclick="switchTab('photos',this)">Photos</button>
+    </div>
+
+    <!-- CLASSES TAB -->
+    <div class="tab-panel active" id="tab-classes">
+      <div class="form-card">
+        <div class="form-card-title">+ Add a new class</div>
+
+        <div style="margin-bottom:1.2rem">
+          <div style="font-size:0.7rem;font-weight:700;font-family:'Syne',sans-serif;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Class type</div>
+          <div class="type-toggle">
+            <button class="type-opt active" id="opt-single" onclick="setType('single')">★ Single Event</button>
+            <button class="type-opt" id="opt-recurring" onclick="setType('recurring')">↻ Weekly Recurring</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="fg"><label>Class name</label><input type="text" id="c-name" placeholder="e.g. Sexy Sneakers"></div>
+          <div class="fg"><label>Price (AUD $)</label><input type="number" id="c-price" placeholder="25" min="1" step="0.50"></div>
+        </div>
+
+        <!-- Single event fields -->
+        <div id="single-fields" class="form-grid">
+          <div class="fg"><label>Date</label><input type="date" id="c-date"></div>
+          <div class="fg"><label>Time</label><input type="time" id="c-time" value="19:30"></div>
+        </div>
+
+        <!-- Recurring fields -->
+        <div id="recurring-fields" class="form-grid hidden">
+          <div class="fg">
+            <label>Day of week</label>
+            <select id="c-day">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3" selected>Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div class="fg"><label>Time</label><input type="time" id="c-time-r" value="19:30"></div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="fg"><label>Max spots</label><input type="number" id="c-spots" placeholder="15" min="1"></div>
+          <div class="fg"><label>Duration (mins)</label><input type="number" id="c-duration" placeholder="60" value="60"></div>
+          <div class="fg"><label>Location</label><input type="text" id="c-location" placeholder="Bondi Junction, Sydney" value="Bondi Junction, Sydney"></div>
+        </div>
+        <div class="fg">
+          <label>Google Maps Link (optional)</label>
+          <input type="url" id="c-maps" placeholder="https://maps.google.com/...">
+        </div>
+        <div class="fg">
+          <label>Description (optional)</label>
+          <textarea id="c-desc" placeholder="What students can expect..."></textarea>
+        </div>
+        <button class="add-btn" id="add-btn" onclick="addClass()">+ Add Class</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-top">
+          <h3>Your classes</h3>
+          <span style="font-size:0.75rem;color:var(--muted)" id="classes-count"></span>
+        </div>
+        <div id="classes-table"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS TAB -->
+    <div class="tab-panel" id="tab-bookings">
+      <div class="table-card">
+        <div class="table-top">
+          <h3>All bookings</h3>
+          <span style="font-size:0.75rem;color:var(--muted)" id="bookings-count"></span>
+        </div>
+        <div id="bookings-table"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- PHOTOS TAB -->
+    <div class="tab-panel" id="tab-photos">
+      <div class="form-card">
+        <div class="form-card-title">📸 Hero slideshow photos</div>
+        <div class="photo-upload-area" id="upload-area">
+          <input type="file" class="upload-input" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this.files)">
+          <div class="upload-icon">📷</div>
+          <div class="upload-title">Click to upload or drag & drop</div>
+          <div class="upload-sub">JPG, PNG, WEBP · Max 5MB each · Multiple files OK</div>
+          <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="progress-bar"></div></div>
+        </div>
+        <div class="photos-grid" id="photos-grid">
+          <div class="loading"><div class="spinner"></div> Loading photos...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://brpcnfoqitjymyygflub.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJycGNuZm9xaXRqeW15eWdmbHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNTQ4NzAsImV4cCI6MjA5MTczMDg3MH0.DxVW0jskYF0An3SrILlAiBDjAJbXDUu7Tjo3_xV9snc';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── AUTH ──
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) { err.textContent = error.message; btn.textContent = 'Sign In'; btn.disabled = false; }
+  else showDashboard(data.user);
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showDashboard(user) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('admin-email').textContent = user.email;
+  loadStats(); loadClasses(); loadBookings(); loadPhotos();
+}
+
+db.auth.getSession().then(({ data: { session } }) => { if (session) showDashboard(session.user); });
+
+// ── TABS ──
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── TYPE TOGGLE ──
+let classType = 'single';
+function setType(t) {
+  classType = t;
+  document.getElementById('opt-single').classList.toggle('active', t === 'single');
+  document.getElementById('opt-recurring').classList.toggle('active', t === 'recurring');
+  document.getElementById('single-fields').classList.toggle('hidden', t !== 'single');
+  document.getElementById('recurring-fields').classList.toggle('hidden', t !== 'recurring');
+}
+
+// ── STATS ──
+async function loadStats() {
+  const { data: bookings } = await db.from('bookings').select('created_at');
+  const { data: classes } = await db.from('classes').select('*').eq('active', true);
+  const { data: photos } = await db.from('photos').select('id').eq('active', true);
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekBookings = bookings ? bookings.filter(b => new Date(b.created_at) > weekAgo).length : 0;
+  document.getElementById('stat-bookings').textContent = bookings ? bookings.length : 0;
+  document.getElementById('stat-classes').textContent = classes ? classes.length : 0;
+  document.getElementById('stat-photos').textContent = photos ? photos.length : 0;
+  document.getElementById('stat-week').textContent = weekBookings;
+}
+
+// ── CLASSES ──
+
+function localDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function fmtDate(ds) {
+  const d = localDate(ds);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+function fmtTime(t) {
+  const [h, m] = t.split(':');
+  const hour = parseInt(h);
+  return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+async function loadClasses() {
+  const wrap = document.getElementById('classes-table');
+  const { data, error } = await db.from('classes').select('*').order('created_at', { ascending: false });
+  if (error || !data || data.length === 0) {
+    wrap.innerHTML = '<div class="empty-table">No classes yet — add one above.</div>';
+    document.getElementById('classes-count').textContent = '';
+    return;
+  }
+  document.getElementById('classes-count').textContent = `${data.length} class${data.length !== 1 ? 'es' : ''}`;
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Name</th><th>Type</th><th>When</th><th>Location</th><th>Price</th><th>Spots</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${data.map(c => {
+      const when = c.type === 'recurring'
+        ? `Every ${DAYS[c.day_of_week]} · ${fmtTime(c.time)}`
+        : `${c.date ? fmtDate(c.date) : '—'} · ${fmtTime(c.time)}`;
+      const statusBadge = !c.active ? '<span class="badge badge-inactive">Inactive</span>'
+        : `<span class="badge badge-active">Active</span>`;
+      return `<tr>
+        <td><strong>${c.name}</strong></td>
+        <td><span class="badge ${c.type === 'recurring' ? 'badge-recurring' : 'badge-single'}">${c.type === 'recurring' ? '↻ Weekly' : '★ Single'}</span></td>
+        <td style="font-size:0.8rem">${when}</td>
+        <td style="font-size:0.8rem;color:var(--muted)">${c.location}</td>
+        <td style="color:var(--green);font-weight:700">$${c.price}</td>
+        <td style="font-size:0.8rem">${c.max_spots} max</td>
+        <td>${statusBadge}</td>
+        <td>
+          <button class="action-btn" onclick="toggleClass('${c.id}',${c.active})">${c.active ? 'Hide' : 'Show'}</button>
+          <button class="action-btn del" onclick="deleteClass('${c.id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+async function addClass() {
+  const name = document.getElementById('c-name').value.trim();
+  const price = parseFloat(document.getElementById('c-price').value);
+  const spots = parseInt(document.getElementById('c-spots').value);
+  const duration = parseInt(document.getElementById('c-duration').value) || 60;
+  const location = document.getElementById('c-location').value.trim() || 'Bondi Junction, Sydney';
+  const mapsUrl = document.getElementById('c-maps').value.trim();
+  const desc = document.getElementById('c-desc').value.trim();
+  if (!name || !price || !spots) { showToast('Please fill in name, price and max spots.', true); return; }
+
+  let payload = { name, price, max_spots: spots, duration_mins: duration, location, location_url: mapsUrl || null, description: desc || null, active: true, type: classType };
+
+  if (classType === 'single') {
+    const date = document.getElementById('c-date').value;
+    const time = document.getElementById('c-time').value;
+    if (!date || !time) { showToast('Please set date and time.', true); return; }
+    payload.date = date; payload.time = time;
+  } else {
+    const day = parseInt(document.getElementById('c-day').value);
+    const time = document.getElementById('c-time-r').value;
+    if (!time) { showToast('Please set the time.', true); return; }
+    payload.day_of_week = day; payload.time = time;
+  }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  const { error } = await db.from('classes').insert(payload);
+  btn.disabled = false; btn.textContent = '+ Add Class';
+
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('Class added successfully!');
+  ['c-name','c-price','c-date','c-spots','c-desc','c-maps'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('c-location').value = 'Bondi Junction, Sydney';
+  loadClasses(); loadStats();
+}
+
+async function toggleClass(id, active) {
+  await db.from('classes').update({ active: !active }).eq('id', id);
+  showToast(active ? 'Class hidden from site' : 'Class now visible on site');
+  loadClasses(); loadStats();
+}
+
+async function deleteClass(id) {
+  if (!confirm('Delete this class? All bookings for it will also be deleted.')) return;
+  await db.from('classes').delete().eq('id', id);
+  showToast('Class deleted'); loadClasses(); loadStats();
+}
+
+// ── BOOKINGS ──
+async function loadBookings() {
+  const wrap = document.getElementById('bookings-table');
+  const { data, error } = await db.from('bookings').select('*, classes(name, price)').order('created_at', { ascending: false });
+  if (error || !data || data.length === 0) {
+    wrap.innerHTML = '<div class="empty-table">No bookings yet.</div>';
+    document.getElementById('bookings-count').textContent = '';
+    return;
+  }
+  document.getElementById('bookings-count').textContent = `${data.length} booking${data.length !== 1 ? 's' : ''}`;
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Customer</th><th>Class</th><th>Booked For</th><th>Amount</th><th>Status</th><th>Booked At</th></tr></thead>
+    <tbody>${data.map(b => `<tr>
+      <td><div style="font-weight:500">${b.name}</div><div style="font-size:0.75rem;color:var(--muted)">${b.email}${b.phone ? ' · '+b.phone : ''}</div></td>
+      <td>${b.classes?.name || '—'}</td>
+      <td style="font-size:0.8rem">${b.booked_date ? fmtDate(b.booked_date) : '—'}</td>
+      <td style="color:var(--green);font-weight:700">${b.classes?.price ? '$'+b.classes.price : '—'}</td>
+      <td><span class="${b.payment_status === 'paid' ? 'status-paid' : 'status-pending'}">${b.payment_status || 'pending'}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem">${new Date(b.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ── PHOTOS ──
+async function loadPhotos() {
+  const grid = document.getElementById('photos-grid');
+  const { data } = await db.from('photos').select('*').order('sort_order');
+  if (!data || data.length === 0) {
+    grid.innerHTML = '<div class="photo-empty">No photos yet — upload some above to start the slideshow.</div>';
+    return;
+  }
+  grid.innerHTML = data.map(p => `
+    <div class="photo-item" id="photo-${p.id}">
+      <img src="${p.url}" alt="${p.caption || ''}">
+      <div class="photo-item-overlay">
+        <button class="photo-action del-photo" onclick="deletePhoto('${p.id}','${p.url}')" title="Delete">🗑</button>
+        <button class="photo-action" onclick="togglePhoto('${p.id}',${p.active})" title="${p.active ? 'Hide' : 'Show'}">${p.active ? '👁' : '🙈'}</button>
+      </div>
+    </div>`).join('');
+}
+
+async function handlePhotoUpload(files) {
+  if (!files.length) return;
+  const progress = document.getElementById('upload-progress');
+  const bar = document.getElementById('progress-bar');
+  progress.style.display = 'block';
+  let done = 0;
+  for (const file of files) {
+    if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} is over 5MB, skipped.`, true); done++; continue; }
+    const ext = file.name.split('.').pop();
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data: upload, error: upErr } = await db.storage.from('photos').upload(filename, file, { contentType: file.type });
+    if (upErr) { showToast('Upload failed: ' + upErr.message, true); done++; continue; }
+    const { data: urlData } = db.storage.from('photos').getPublicUrl(filename);
+    const { data: existing } = await db.from('photos').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = existing && existing.length ? existing[0].sort_order + 1 : 0;
+    await db.from('photos').insert({ url: urlData.publicUrl, sort_order: nextOrder, active: true });
+    done++;
+    bar.style.width = Math.round((done / files.length) * 100) + '%';
+  }
+  setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0'; }, 800);
+  showToast(`${done} photo${done !== 1 ? 's' : ''} uploaded!`);
+  loadPhotos(); loadStats();
+}
+
+async function deletePhoto(id, url) {
+  if (!confirm('Remove this photo from the slideshow?')) return;
+  const filename = url.split('/').pop();
+  await db.storage.from('photos').remove([filename]);
+  await db.from('photos').delete().eq('id', id);
+  document.getElementById('photo-' + id)?.remove();
+  showToast('Photo removed');
+  loadStats();
+}
+
+async function togglePhoto(id, active) {
+  await db.from('photos').update({ active: !active }).eq('id', id);
+  showToast(active ? 'Photo hidden from slideshow' : 'Photo added to slideshow');
+  loadPhotos();
+}
+
+// drag & drop
+const uploadArea = document.getElementById('upload-area');
+uploadArea?.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea?.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea?.addEventListener('drop', e => { e.preventDefault(); uploadArea.classList.remove('dragover'); handlePhotoUpload(e.dataTransfer.files); });
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? '#FF3C6E' : 'var(--green)';
+  t.style.color = isError ? '#fff' : '#000';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
