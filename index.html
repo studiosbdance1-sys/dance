@@ -379,9 +379,16 @@ function startSlideTimer() { slideTimer = setTimeout(nextSlide, 4500); }
 // ── DATE HELPERS ──
 // Force Sydney time for all date operations
 function getSydneyNow() {
+  // Get current date parts in Sydney timezone
   const now = new Date();
-  const sydneyStr = now.toLocaleString('en-CA', { timeZone: 'Australia/Sydney' });
-  return new Date(sydneyStr);
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(now);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
 }
 
 function getNextNDates(dayOfWeek, n) {
