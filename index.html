@@ -379,7 +379,9 @@ function startSlideTimer() { slideTimer = setTimeout(nextSlide, 4500); }
 // ── DATE HELPERS ──
 // Force Sydney time for all date operations
 function getSydneyNow() {
-  return new Date(new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }));
+  const now = new Date();
+  const sydneyStr = now.toLocaleString('en-CA', { timeZone: 'Australia/Sydney' });
+  return new Date(sydneyStr);
 }
 
 function getNextNDates(dayOfWeek, n) {
