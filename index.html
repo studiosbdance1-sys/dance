@@ -397,7 +397,7 @@ function getNextNDates(dayOfWeek, n) {
   today.setHours(0,0,0,0);
   let d = new Date(today);
   let diff = (dayOfWeek - d.getDay() + 7) % 7;
-  if (diff === 0) diff = 7;
+  if (diff === 0) diff = 0;
   d.setDate(d.getDate() + diff);
   for (let i = 0; i < n; i++) {
     dates.push(new Date(d));
