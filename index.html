@@ -377,27 +377,13 @@ function prevSlide() { clearTimeout(slideTimer); goSlide(currentSlide - 1); star
 function startSlideTimer() { slideTimer = setTimeout(nextSlide, 4500); }
 
 // ── DATE HELPERS ──
-// Force Sydney time for all date operations
-function getSydneyNow() {
-  // Get current date parts in Sydney timezone
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Sydney',
-    year: 'numeric', month: '2-digit', day: '2-digit'
-  }).formatToParts(now);
-  const y = parts.find(p => p.type === 'year').value;
-  const m = parts.find(p => p.type === 'month').value;
-  const d = parts.find(p => p.type === 'day').value;
-  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-}
-
 function getNextNDates(dayOfWeek, n) {
   const dates = [];
-  const today = getSydneyNow();
+  const today = new Date();
   today.setHours(0,0,0,0);
   let d = new Date(today);
   let diff = (dayOfWeek - d.getDay() + 7) % 7;
-  if (diff === 0) diff = 0;
+  if (diff === 0) diff = 7;
   d.setDate(d.getDate() + diff);
   for (let i = 0; i < n; i++) {
     dates.push(new Date(d));
@@ -408,16 +394,7 @@ function getNextNDates(dayOfWeek, n) {
 
 function fmtDateShort(d) { return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`; }
 function fmtDateFull(d) { return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`; }
-function localDate(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-function dateToStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return y + '-' + m + '-' + day;
-}
+function dateToStr(d) { return d.toISOString().split('T')[0]; }
 
 function fmtTime(t) {
   const [h, m] = t.split(':');
@@ -428,6 +405,17 @@ function fmtTime(t) {
 async function getBookingsForDate(classId, dateStr) {
   const { data } = await db.from('bookings').select('id').eq('class_id', classId).eq('booked_date', dateStr);
   return data ? data.length : 0;
+}
+
+// ── BLOCKED DATES ──
+let blockedDates = [];
+async function loadBlockedDates() {
+  const { data } = await db.from('blocked_dates').select('class_id, blocked_date');
+  blockedDates = data || [];
+}
+
+function isBlocked(classId, dateStr) {
+  return blockedDates.some(b => b.class_id === classId && b.blocked_date === dateStr);
 }
 
 // ── LOAD CLASSES ──
@@ -442,7 +430,7 @@ async function loadClasses() {
     }
     // Filter: singles must be in the future
     const today = new Date(); today.setHours(0,0,0,0);
-    const visible = data.filter(c => c.type === 'recurring' || (c.date && localDate(c.date) >= today));
+    const visible = data.filter(c => c.type === 'recurring' || (c.date && new Date(c.date + 'T00:00:00') >= today));
     if (!visible.length) {
       list.innerHTML = `<div class="empty-state"><h3>No upcoming classes right now</h3><p>Follow @studiosbdance for the latest updates.</p></div>`;
       return;
@@ -467,22 +455,24 @@ function renderClassCard(c) {
   const mapsLink = c.location_url ? `<a href="${c.location_url}" target="_blank">${c.location}</a>` : `<span>${c.location}</span>`;
   let dateSection = '';
   if (isRecurring) {
-    const dates = getNextNDates(c.day_of_week, 4);
+    const allDates = getNextNDates(c.day_of_week, 8); // get 8 to have extras after filtering
+    const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
     dateSection = `
       <div class="date-selector">
-        <div class="date-selector-label">Select a date — next 4 sessions</div>
+        <div class="date-selector-label">Select a date — next available sessions</div>
         <div class="date-pills" id="pills-${c.id}">
-          ${dates.map((d,i) => `
+          ${dates.length === 0
+            ? '<div style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">No upcoming sessions available right now.</div>'
+            : dates.map((d,i) => `
             <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}">
               <div class="date-pill-day">${DAYS_SHORT[d.getDay()]}</div>
               <div class="date-pill-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
-
             </div>`).join('')}
         </div>
       </div>`;
   }
 
-  const singleDateStr = !isRecurring && c.date ? localDate(c.date) : null;
+  const singleDateStr = !isRecurring && c.date ? new Date(c.date + 'T00:00:00') : null;
   const dateDisplay = isRecurring
     ? `Every ${DAYS[c.day_of_week]} · ${fmtTime(c.time)}`
     : `${singleDateStr ? fmtDateFull(singleDateStr) : ''} · ${fmtTime(c.time)}`;
@@ -568,7 +558,7 @@ async function openModal(classId) {
     selectedDate = c.date;
   }
 
-  const d = localDate(selectedDate);
+  const d = new Date(selectedDate + 'T00:00:00');
   document.getElementById('m-name').textContent = c.name;
   document.getElementById('m-price').textContent = `$${c.price}`;
   document.getElementById('m-meta').innerHTML = `${fmtDateFull(d)} · ${fmtTime(c.time)}<br>${c.location}`;
@@ -645,7 +635,7 @@ document.getElementById('modal').addEventListener('click', e => { if (e.target =
 
 // ── INIT ──
 loadPhotos();
-loadClasses();
+loadBlockedDates().then(() => loadClasses());
 </script>
 </body>
 </html>
