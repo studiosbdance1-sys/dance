@@ -419,6 +419,16 @@ async function getBookingsForDate(classId, dateStr) {
   return data ? data.length : 0;
 }
 
+// ── BLOCKED DATES ──
+let blockedDates = [];
+async function loadBlockedDates() {
+  const { data } = await db.from('blocked_dates').select('class_id, blocked_date');
+  blockedDates = data || [];
+}
+function isBlocked(classId, dateStr) {
+  return blockedDates.some(b => b.class_id === classId && b.blocked_date === dateStr);
+}
+
 // ── LOAD CLASSES ──
 async function loadClasses() {
   const list = document.getElementById('classes-list');
@@ -456,16 +466,18 @@ function renderClassCard(c) {
   const mapsLink = c.location_url ? `<a href="${c.location_url}" target="_blank">${c.location}</a>` : `<span>${c.location}</span>`;
   let dateSection = '';
   if (isRecurring) {
-    const dates = getNextNDates(c.day_of_week, 4);
+    const allDates = getNextNDates(c.day_of_week, 8);
+    const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
     dateSection = `
       <div class="date-selector">
-        <div class="date-selector-label">Select a date — next 4 sessions</div>
+        <div class="date-selector-label">Select a date — next available sessions</div>
         <div class="date-pills" id="pills-${c.id}">
-          ${dates.map((d,i) => `
+          ${dates.length === 0
+            ? '<div style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">No upcoming sessions — check back soon.</div>'
+            : dates.map((d,i) => `
             <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}">
               <div class="date-pill-day">${DAYS_SHORT[d.getDay()]}</div>
               <div class="date-pill-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
-
             </div>`).join('')}
         </div>
       </div>`;
@@ -634,7 +646,7 @@ document.getElementById('modal').addEventListener('click', e => { if (e.target =
 
 // ── INIT ──
 loadPhotos();
-loadClasses();
+loadBlockedDates().then(() => loadClasses());
 </script>
 </body>
 </html>
