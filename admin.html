@@ -185,6 +185,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <button class="tab active" onclick="switchTab('classes',this)">Classes</button>
       <button class="tab" onclick="switchTab('bookings',this)">Bookings</button>
       <button class="tab" onclick="switchTab('photos',this)">Photos</button>
+      <button class="tab" onclick="switchTab('blocked',this)">🚫 Skip Dates</button>
     </div>
 
     <!-- CLASSES TAB -->
@@ -280,6 +281,36 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
       </div>
     </div>
+
+    <!-- BLOCKED DATES TAB -->
+    <div class="tab-panel" id="tab-blocked">
+      <div class="form-card">
+        <div class="form-card-title">🚫 Skip a date</div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1.5rem">Add a date to skip — that Wednesday won't appear in the booking options for customers.</p>
+        <div class="form-grid">
+          <div class="fg">
+            <label>Class</label>
+            <select id="block-class">
+              <option value="">Loading classes...</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Date to skip</label>
+            <input type="date" id="block-date">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Reason (optional — not shown to customers)</label>
+          <input type="text" id="block-reason" placeholder="e.g. Public holiday, travelling...">
+        </div>
+        <button class="add-btn" onclick="addBlockedDate()">🚫 Skip This Date</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-top"><h3>Skipped dates</h3></div>
+        <div id="blocked-table"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -317,7 +348,7 @@ function showDashboard(user) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = user.email;
-  loadStats(); loadClasses(); loadBookings(); loadPhotos();
+  loadStats(); loadClasses(); loadBookings(); loadPhotos(); loadBlockedClassSelect(); loadBlockedDates();
 }
 
 db.auth.getSession().then(({ data: { session } }) => { if (session) showDashboard(session.user); });
@@ -328,6 +359,7 @@ function switchTab(tab, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   el.classList.add('active');
+  if (tab === 'blocked') { loadBlockedDates(); loadBlockedClassSelect(); }
 }
 
 // ── TYPE TOGGLE ──
@@ -537,6 +569,71 @@ const uploadArea = document.getElementById('upload-area');
 uploadArea?.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
 uploadArea?.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
 uploadArea?.addEventListener('drop', e => { e.preventDefault(); uploadArea.classList.remove('dragover'); handlePhotoUpload(e.dataTransfer.files); });
+
+// ── BLOCKED DATES ──
+async function loadBlockedClassSelect() {
+  const { data } = await db.from('classes').select('id, name').eq('active', true);
+  const sel = document.getElementById('block-class');
+  if (data && data.length) {
+    sel.innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+}
+
+async function addBlockedDate() {
+  const classId = document.getElementById('block-class').value;
+  const date = document.getElementById('block-date').value;
+  const reason = document.getElementById('block-reason').value.trim();
+  if (!classId || !date) { showToast('Please select a class and date.', true); return; }
+
+  const { error } = await db.from('blocked_dates').insert({
+    class_id: classId,
+    blocked_date: date,
+    reason: reason || null
+  });
+
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('Date skipped successfully!');
+  document.getElementById('block-date').value = '';
+  document.getElementById('block-reason').value = '';
+  loadBlockedDates();
+}
+
+async function loadBlockedDates() {
+  const wrap = document.getElementById('blocked-table');
+  const { data, error } = await db
+    .from('blocked_dates')
+    .select('*, classes(name)')
+    .order('blocked_date', { ascending: true });
+
+  if (error || !data || data.length === 0) {
+    wrap.innerHTML = '<div class="empty-table">No dates skipped yet.</div>';
+    return;
+  }
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmtD(ds) {
+    const [y,m,d] = ds.split('-').map(Number);
+    const date = new Date(y, m-1, d);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    return `${days[date.getDay()]} ${d} ${MONTHS[m-1]} ${y}`;
+  }
+
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Class</th><th>Skipped Date</th><th>Reason</th><th>Action</th></tr></thead>
+    <tbody>${data.map(b => `<tr>
+      <td>${b.classes?.name || '—'}</td>
+      <td>${fmtD(b.blocked_date)}</td>
+      <td style="color:var(--muted);font-size:0.8rem">${b.reason || '—'}</td>
+      <td><button class="action-btn del" onclick="removeBlockedDate('${b.id}')">Remove</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function removeBlockedDate(id) {
+  await db.from('blocked_dates').delete().eq('id', id);
+  showToast('Date restored!');
+  loadBlockedDates();
+}
 
 function showToast(msg, isError = false) {
   const t = document.getElementById('toast');
