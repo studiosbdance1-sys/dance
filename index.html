@@ -419,24 +419,24 @@ async function getBookingsForDate(classId, dateStr) {
 async function getSpotsLeft(classObj, dateStr) {
   const isDouble = classObj.name.toLowerCase().includes('double');
   if (isDouble) {
-    // Check both sneakers and heels capacity
-    const { data: allClasses } = await db.from('classes').select('id,name,max_spots').eq('active',true);
+    const { data: allClasses } = await db.from('classes').select('id,name').eq('active',true);
     if (!allClasses) return 0;
     const sneakers = allClasses.find(c => c.name.toLowerCase().includes('sneakers') && !c.name.toLowerCase().includes('double'));
-    const heels = allClasses.find(c => (c.name.toLowerCase().includes('slow') || c.name.toLowerCase().includes('heels')) && !c.name.toLowerCase().includes('double'));
+    const heels = allClasses.find(c => c.name.toLowerCase().includes('slow') && !c.name.toLowerCase().includes('double'));
     let minLeft = 999;
     if (sneakers) {
       const b = await getBookingsForDate(sneakers.id, dateStr);
-      minLeft = Math.min(minLeft, Math.max(0, getClassLimit(sneakers.name) - b));
+      minLeft = Math.min(minLeft, Math.max(0, 20 - b));
     }
     if (heels) {
       const b = await getBookingsForDate(heels.id, dateStr);
-      minLeft = Math.min(minLeft, Math.max(0, getClassLimit(heels.name) - b));
+      minLeft = Math.min(minLeft, Math.max(0, 16 - b));
     }
     return minLeft === 999 ? 0 : minLeft;
   }
   const booked = await getBookingsForDate(classObj.id, dateStr);
-  return Math.max(0, getClassLimit(classObj.name) - booked);
+  const limit = getClassLimit(classObj.name);
+  return Math.max(0, limit - booked);
 }
 
 // ── LOAD CLASSES ──
@@ -482,7 +482,7 @@ function renderClassCard(c) {
         <div class="date-selector-label">Select a date — next 4 sessions</div>
         <div class="date-pills" id="pills-${c.id}">
           ${dates.map((d,i) => `
-            <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}">
+            <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}" id="pill-${c.id}-${dateToStr(d)}">
               <div class="date-pill-day">${DAYS_SHORT[d.getDay()]}</div>
               <div class="date-pill-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
 
@@ -529,18 +529,17 @@ function renderClassCard(c) {
 async function loadSpotCounts(classes) {
   for (const c of classes) {
     if (c.type !== 'recurring') continue;
-    const dates = getNextNDates(c.day_of_week, 8).filter(d => !isBlocked(c.id, dateToStr(d))).slice(0,4);
+    const allDates = getNextNDates(c.day_of_week, 8);
+    const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
     for (const d of dates) {
       const ds = dateToStr(d);
       const left = await getSpotsLeft(c, ds);
-      // Update pill spots label
       const el = document.getElementById(`pillspots-${c.id}-${ds}`);
       if (el) {
-        el.textContent = left === 0 ? '🔴 Full' : left <= 3 ? `${left} left` : '';
-        if (left === 0) el.style.color = '#FF3C6E';
-        else if (left <= 3) el.style.color = '#FF9A3C';
+        if (left === 0) { el.textContent = '🔴 Full'; el.style.color = '#FF3C6E'; }
+        else if (left <= 5) { el.textContent = `${left} left`; el.style.color = '#FF9A3C'; }
+        else { el.textContent = ''; }
       }
-      // Disable pill if full
       const pill = document.getElementById(`pill-${c.id}-${ds}`);
       if (pill && left === 0) {
         pill.style.opacity = '0.5';
@@ -548,18 +547,17 @@ async function loadSpotCounts(classes) {
         pill.onclick = null;
       }
     }
-    if (dates.length > 0) updateCardBadgeNew(c, dateToStr(dates[0]));
+    if (dates.length > 0) {
+      const left = await getSpotsLeft(c, dateToStr(dates[0]));
+      const badge = document.getElementById(`badge-${c.id}`);
+      const btn = document.getElementById(`bookbtn-${c.id}`);
+      if (badge) {
+        badge.className = 'spots-badge ' + (left === 0 ? 'spots-full' : left <= 5 ? 'spots-few' : 'spots-open');
+        badge.textContent = left === 0 ? 'Full' : left <= 5 ? `${left} spots left` : `${left} spots`;
+      }
+      if (btn) btn.disabled = left === 0;
+    }
   }
-}
-
-async function updateCardBadgeNew(classObj, dateStr) {
-  const left = await getSpotsLeft(classObj, dateStr);
-  const badge = document.getElementById(`badge-${classObj.id}`);
-  const btn = document.getElementById(`bookbtn-${classObj.id}`);
-  if (!badge) return;
-  badge.className = 'spots-badge ' + (left === 0 ? 'spots-full' : left <= 3 ? 'spots-few' : 'spots-open');
-  badge.textContent = left === 0 ? 'Full' : left <= 3 ? `${left} spots left` : `${left} spots`;
-  if (btn) btn.disabled = left === 0;
 }
 
 async function updateCardBadge(classId, dateStr, maxSpots) {
@@ -574,12 +572,11 @@ async function updateCardBadge(classId, dateStr, maxSpots) {
 }
 
 function selectDate(classId, dateStr, el) {
-  // Don't allow selecting full dates
-  if (el.style.cursor === 'not-allowed') return;
   document.querySelectorAll(`#pills-${classId} .date-pill`).forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
-  db.from('classes').select('*').eq('id', classId).single().then(({data}) => {
-    if (data) updateCardBadgeNew(data, dateStr);
+  // find class and update badge
+  db.from('classes').select('max_spots').eq('id', classId).single().then(({data}) => {
+    if (data) updateCardBadge(classId, dateStr, data.max_spots);
   });
 }
 
@@ -620,15 +617,7 @@ async function submitBooking() {
   if (!email.includes('@')) { showToast('Please enter a valid email.', true); return; }
 
   const btn = document.getElementById('modal-btn');
-  btn.disabled = true; btn.textContent = 'Checking availability...';
-
-  // Double-check spots haven't run out since page loaded
-  const spotsLeft = await getSpotsLeft(modalClassData, selectedDate);
-  if (spotsLeft <= 0) {
-    btn.disabled = false; btn.textContent = 'Confirm & Pay →';
-    showToast('Sorry — this date just became fully booked! Please select another date.', true);
-    return;
-  }
+  btn.disabled = true; btn.textContent = 'Redirecting to payment...';
 
   // Store booking details in sessionStorage — only saved to Supabase AFTER payment confirmed
   const song = document.getElementById('b-song').value.trim();
@@ -683,7 +672,11 @@ document.getElementById('modal').addEventListener('click', e => { if (e.target =
 
 // ── INIT ──
 loadPhotos();
-loadClasses();
+loadBlockedDates().then(async () => {
+  await loadClasses();
+  const { data } = await db.from('classes').select('*').eq('active', true);
+  if (data) loadSpotCounts(data);
+});
 </script>
 </body>
 </html>
