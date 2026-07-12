@@ -326,15 +326,6 @@ const STRIPE_LINKS = {
 };
 const COUPON_ID = 'FIRSTTIMER';
 
-const CLASS_LIMITS = { 'sexy sneakers': 20, 'slow heels': 16, 'double': 16 };
-function getClassLimit(className) {
-  const n = (className || '').toLowerCase();
-  if (n.includes('double')) return CLASS_LIMITS['double'];
-  if (n.includes('slow')) return CLASS_LIMITS['slow heels'];
-  if (n.includes('sneakers')) return CLASS_LIMITS['sexy sneakers'];
-  return 20;
-}
-
 function getStripeLink(className) {
   const n = (className || '').toLowerCase();
   if (n.includes('double')) return STRIPE_LINKS['double'];
@@ -353,6 +344,22 @@ const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 
 let selectedClass = null;
 let selectedDate = null;
+
+// ── CLASS REGISTRY (for cross-class spot counting) ──
+let classRegistry = {};
+let classIdByType = { sneakers: null, heels: null, double: null };
+
+function buildClassRegistry(classes) {
+  classRegistry = {};
+  classIdByType = { sneakers: null, heels: null, double: null };
+  for (const c of classes) {
+    classRegistry[c.id] = c;
+    const n = (c.name || '').toLowerCase();
+    if (n.includes('double')) classIdByType.double = c.id;
+    else if (n.includes('slow') || n.includes('heel')) classIdByType.heels = c.id;
+    else if (n.includes('sneaker')) classIdByType.sneakers = c.id;
+  }
+}
 
 // ── SLIDESHOW ──
 let slides = [], currentSlide = 0, slideTimer = null;
@@ -388,22 +395,34 @@ function startSlideTimer() { slideTimer = setTimeout(nextSlide, 4500); }
 // ── DATE HELPERS ──
 function getNextNDates(dayOfWeek, n) {
   const dates = [];
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  let d = new Date(today);
-  let diff = (dayOfWeek - d.getDay() + 7) % 7;
-  if (diff === 0) diff = 7;
-  d.setDate(d.getDate() + diff);
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
+  }).formatToParts(now);
+  const y = parseInt(parts.find(p => p.type === 'year').value);
+  const m = parseInt(parts.find(p => p.type === 'month').value) - 1;
+  const d = parseInt(parts.find(p => p.type === 'day').value);
+  const todayLocal = new Date(y, m, d);
+  const todayDay = todayLocal.getDay();
+  let diff = (dayOfWeek - todayDay + 7) % 7;
+  if (diff === 0) diff = 0;
+  todayLocal.setDate(todayLocal.getDate() + diff);
   for (let i = 0; i < n; i++) {
-    dates.push(new Date(d));
-    d.setDate(d.getDate() + 7);
+    dates.push(new Date(todayLocal));
+    todayLocal.setDate(todayLocal.getDate() + 7);
   }
   return dates;
 }
 
 function fmtDateShort(d) { return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`; }
 function fmtDateFull(d) { return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`; }
-function dateToStr(d) { return d.toISOString().split('T')[0]; }
+function dateToStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
 
 function fmtTime(t) {
   const [h, m] = t.split(':');
@@ -416,27 +435,50 @@ async function getBookingsForDate(classId, dateStr) {
   return data ? data.length : 0;
 }
 
-async function getSpotsLeft(classObj, dateStr) {
-  const isDouble = classObj.name.toLowerCase().includes('double');
-  if (isDouble) {
-    const { data: allClasses } = await db.from('classes').select('id,name').eq('active',true);
-    if (!allClasses) return 0;
-    const sneakers = allClasses.find(c => c.name.toLowerCase().includes('sneakers') && !c.name.toLowerCase().includes('double'));
-    const heels = allClasses.find(c => c.name.toLowerCase().includes('slow') && !c.name.toLowerCase().includes('double'));
-    let minLeft = 999;
-    if (sneakers) {
-      const b = await getBookingsForDate(sneakers.id, dateStr);
-      minLeft = Math.min(minLeft, Math.max(0, 20 - b));
-    }
-    if (heels) {
-      const b = await getBookingsForDate(heels.id, dateStr);
-      minLeft = Math.min(minLeft, Math.max(0, 16 - b));
-    }
-    return minLeft === 999 ? 0 : minLeft;
+// Returns available spots for a class, accounting for shared room capacity.
+// Double bookings count against both Sneakers and Heels totals.
+async function getAvailableSpots(classId, dateStr) {
+  const c = classRegistry[classId];
+  const maxSpots = c ? c.max_spots : 20;
+  if (!c) return maxSpots;
+
+  const n = (c.name || '').toLowerCase();
+  const isDouble = n.includes('double');
+  const isHeels = !isDouble && (n.includes('slow') || n.includes('heel'));
+  const isSneakers = !isDouble && n.includes('sneaker');
+
+  const ownBookings = await getBookingsForDate(classId, dateStr);
+
+  if (isSneakers || isHeels) {
+    const doubleId = classIdByType.double;
+    const doubleBookings = doubleId ? await getBookingsForDate(doubleId, dateStr) : 0;
+    return Math.max(0, maxSpots - (ownBookings + doubleBookings));
   }
-  const booked = await getBookingsForDate(classObj.id, dateStr);
-  const limit = getClassLimit(classObj.name);
-  return Math.max(0, limit - booked);
+
+  if (isDouble) {
+    const sneakersId = classIdByType.sneakers;
+    const heelsId = classIdByType.heels;
+    const sneakersMax = (classRegistry[sneakersId] || {}).max_spots || maxSpots;
+    const heelsMax = (classRegistry[heelsId] || {}).max_spots || maxSpots;
+    const sneakersBookings = sneakersId ? await getBookingsForDate(sneakersId, dateStr) : 0;
+    const heelsBookings = heelsId ? await getBookingsForDate(heelsId, dateStr) : 0;
+    const doubleBookings = ownBookings;
+    const sneakersAvail = Math.max(0, sneakersMax - (sneakersBookings + doubleBookings));
+    const heelsAvail = Math.max(0, heelsMax - (heelsBookings + doubleBookings));
+    return Math.min(sneakersAvail, heelsAvail);
+  }
+
+  return Math.max(0, maxSpots - ownBookings);
+}
+
+// ── BLOCKED DATES ──
+let blockedDates = [];
+async function loadBlockedDates() {
+  const { data } = await db.from('blocked_dates').select('class_id, blocked_date');
+  blockedDates = data || [];
+}
+function isBlocked(classId, dateStr) {
+  return blockedDates.some(b => b.class_id === classId && b.blocked_date === dateStr);
 }
 
 // ── LOAD CLASSES ──
@@ -456,12 +498,25 @@ async function loadClasses() {
       list.innerHTML = `<div class="empty-state"><h3>No upcoming classes right now</h3><p>Follow @studiosbdance for the latest updates.</p></div>`;
       return;
     }
+    buildClassRegistry(data);
+
     const sorted = [...visible].sort((a,b) => {
       const aD = a.name && a.name.toLowerCase().includes('double') ? 0 : 1;
       const bD = b.name && b.name.toLowerCase().includes('double') ? 0 : 1;
       return aD - bD;
     });
     list.innerHTML = sorted.map(c => renderClassCard(c)).join('');
+
+    // Refresh spot badges after cards are in the DOM
+    for (const c of sorted) {
+      if (c.type === 'recurring') {
+        const allDates = getNextNDates(c.day_of_week, 8);
+        const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
+        if (dates.length > 0) await updateCardBadge(c.id, dateToStr(dates[0]));
+      } else if (c.date) {
+        await updateCardBadge(c.id, c.date);
+      }
+    }
   } catch(e) {
     console.error('loadClasses error:', e);
     list.innerHTML = `<div class="empty-state"><h3>Couldn't load classes</h3><p>${e.message}</p></div>`;
@@ -476,16 +531,18 @@ function renderClassCard(c) {
   const mapsLink = c.location_url ? `<a href="${c.location_url}" target="_blank">${c.location}</a>` : `<span>${c.location}</span>`;
   let dateSection = '';
   if (isRecurring) {
-    const dates = getNextNDates(c.day_of_week, 4);
+    const allDates = getNextNDates(c.day_of_week, 8);
+    const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
     dateSection = `
       <div class="date-selector">
-        <div class="date-selector-label">Select a date — next 4 sessions</div>
+        <div class="date-selector-label">Select a date — next available sessions</div>
         <div class="date-pills" id="pills-${c.id}">
-          ${dates.map((d,i) => `
-            <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}" id="pill-${c.id}-${dateToStr(d)}">
+          ${dates.length === 0
+            ? '<div style="color:var(--muted);font-size:0.85rem;padding:0.5rem 0">No upcoming sessions — check back soon.</div>'
+            : dates.map((d,i) => `
+            <div class="date-pill ${i===0?'selected':''}" onclick="selectDate('${c.id}','${dateToStr(d)}',this)" data-date="${dateToStr(d)}">
               <div class="date-pill-day">${DAYS_SHORT[d.getDay()]}</div>
               <div class="date-pill-date">${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</div>
-
             </div>`).join('')}
         </div>
       </div>`;
@@ -518,51 +575,15 @@ function renderClassCard(c) {
             <div class="class-price">$${c.price}</div>
             <div class="class-price-note">per session</div>
           </div>
-          
+          <div class="spots-badge spots-open" id="badge-${c.id}">Loading...</div>
           <button class="book-btn" id="bookbtn-${c.id}" onclick="openModal('${c.id}')">Book Now</button>
         </div>
       </div>
     </div>`;
 }
 
-// Load spots counts for recurring classes
-async function loadSpotCounts(classes) {
-  for (const c of classes) {
-    if (c.type !== 'recurring') continue;
-    const allDates = getNextNDates(c.day_of_week, 8);
-    const dates = allDates.filter(d => !isBlocked(c.id, dateToStr(d))).slice(0, 4);
-    for (const d of dates) {
-      const ds = dateToStr(d);
-      const left = await getSpotsLeft(c, ds);
-      const el = document.getElementById(`pillspots-${c.id}-${ds}`);
-      if (el) {
-        if (left === 0) { el.textContent = '🔴 Full'; el.style.color = '#FF3C6E'; }
-        else if (left <= 5) { el.textContent = `${left} left`; el.style.color = '#FF9A3C'; }
-        else { el.textContent = ''; }
-      }
-      const pill = document.getElementById(`pill-${c.id}-${ds}`);
-      if (pill && left === 0) {
-        pill.style.opacity = '0.5';
-        pill.style.cursor = 'not-allowed';
-        pill.onclick = null;
-      }
-    }
-    if (dates.length > 0) {
-      const left = await getSpotsLeft(c, dateToStr(dates[0]));
-      const badge = document.getElementById(`badge-${c.id}`);
-      const btn = document.getElementById(`bookbtn-${c.id}`);
-      if (badge) {
-        badge.className = 'spots-badge ' + (left === 0 ? 'spots-full' : left <= 5 ? 'spots-few' : 'spots-open');
-        badge.textContent = left === 0 ? 'Full' : left <= 5 ? `${left} spots left` : `${left} spots`;
-      }
-      if (btn) btn.disabled = left === 0;
-    }
-  }
-}
-
-async function updateCardBadge(classId, dateStr, maxSpots) {
-  const booked = await getBookingsForDate(classId, dateStr);
-  const left = Math.max(0, maxSpots - booked);
+async function updateCardBadge(classId, dateStr) {
+  const left = await getAvailableSpots(classId, dateStr);
   const badge = document.getElementById(`badge-${classId}`);
   const btn = document.getElementById(`bookbtn-${classId}`);
   if (!badge) return;
@@ -574,10 +595,7 @@ async function updateCardBadge(classId, dateStr, maxSpots) {
 function selectDate(classId, dateStr, el) {
   document.querySelectorAll(`#pills-${classId} .date-pill`).forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
-  // find class and update badge
-  db.from('classes').select('max_spots').eq('id', classId).single().then(({data}) => {
-    if (data) updateCardBadge(classId, dateStr, data.max_spots);
-  });
+  updateCardBadge(classId, dateStr);
 }
 
 let modalClassData = null;
@@ -593,6 +611,14 @@ async function openModal(classId) {
     selectedDate = sel ? sel.dataset.date : dateToStr(getNextNDates(c.day_of_week, 1)[0]);
   } else {
     selectedDate = c.date;
+  }
+
+  // Final availability check before opening modal
+  const left = await getAvailableSpots(classId, selectedDate);
+  if (left <= 0) {
+    showToast('Sorry, this class is now full!', true);
+    await updateCardBadge(classId, selectedDate);
+    return;
   }
 
   const d = new Date(selectedDate + 'T00:00:00');
@@ -672,11 +698,7 @@ document.getElementById('modal').addEventListener('click', e => { if (e.target =
 
 // ── INIT ──
 loadPhotos();
-loadBlockedDates().then(async () => {
-  await loadClasses();
-  const { data } = await db.from('classes').select('*').eq('active', true);
-  if (data) loadSpotCounts(data);
-});
+loadBlockedDates().then(() => loadClasses());
 </script>
 </body>
 </html>
